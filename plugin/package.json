@@ -1,6 +1,6 @@
 {
   "name": "paseo-pet-bridge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Streams Paseo agent completions, failures, and permission requests to a desktop pet over a local SSE API",
   "keywords": [
     "paseo",

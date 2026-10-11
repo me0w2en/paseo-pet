@@ -1,6 +1,5 @@
 {
   "id": "pet-bridge",
-  "name": "Pet Bridge",
   "description": "Streams agent completions, failures, and permission requests to a desktop pet (PaseoPet) over a local token-authenticated SSE API, and lets the pet approve or deny permissions.",
   "requirements": {
     "paseo": ">=0.11.2"
