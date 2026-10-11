@@ -1,5 +1,8 @@
-import type { PluginHookAgent } from "@getpaseo/plugin/server";
-import type { AgentPermissionRequest, AgentTimelineItem } from "@getpaseo/protocol/agent-types";
+import type { PluginHookAgent, PluginLifecycleEvents } from "@getpaseo/plugin/server";
+
+// Derived from the hook payloads so the plugin only depends on host-provided modules.
+type AgentPermissionRequest = PluginLifecycleEvents["agent.permission_requested"]["request"];
+type AgentTimelineItem = PluginLifecycleEvents["agent.turn_ended"]["timeline"][number];
 
 export type PetAgentStatus = "running" | "idle" | "waiting" | "error";
 

@@ -1,5 +1,4 @@
-import type { PaseoApi } from "@getpaseo/client";
-import type { PluginServerContext } from "@getpaseo/plugin/server";
+import type { PluginHookContext, PluginServerContext } from "@getpaseo/plugin/server";
 import { startBridge, type Bridge } from "./server/http";
 import { AgentBoard, describePermission, finalAssistantText, type PetNotice } from "./server/state";
 
@@ -7,7 +6,7 @@ export default function contribute(server: PluginServerContext) {
   const board = new AgentBoard();
   let bridge: Bridge | null = null;
   // Hooks hand us a client bound to this daemon; keep the latest one for permission replies from the pet.
-  let paseo: PaseoApi | null = null;
+  let paseo: PluginHookContext["paseo"] | null = null;
   let stopped = false;
 
   const publish = (notice?: PetNotice) => {
