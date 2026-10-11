@@ -4,6 +4,11 @@
 
 [Paseo](https://paseo.sh)용 데스크톱 펫입니다. 화면 구석에 떠 있다가 에이전트 상태에 따라 반응하고, 작업이 끝나거나 실패하면 알려 줍니다. 권한 요청은 Paseo를 열지 않고 펫에서 바로 허용/거절할 수 있습니다.
 
+<p>
+  <img src="images/permission.png" alt="Permission request bubble" width="320">
+  <img src="images/completed.png" alt="Turn completed bubble" width="320">
+</p>
+
 | 폴더 | 내용 |
 | --- | --- |
 | `plugin/` | **pet-bridge**: 에이전트 이벤트를 로컬 SSE API로 내보내는 Paseo 플러그인 |
@@ -66,7 +71,7 @@ Paseo 데몬 ─ lifecycle hooks ─▶ pet-bridge (127.0.0.1:6792, 토큰 인�
 #    (또는 ~/.paseo/config.json에 "pluginsEnabled": true 추가 후 `paseo reload`)
 
 # 2) 브리지 플러그인 설치
-paseo plugin install github:me0w2en/paseo-pet:plugin
+paseo plugin install npm:paseo-pet-bridge        # 또는 github:me0w2en/paseo-pet:plugin
 paseo plugin ls            # pet-bridge가 running인지 확인
 
 # 3) 앱 빌드 → 원하는 위치로 옮겨 실행

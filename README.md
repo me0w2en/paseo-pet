@@ -4,6 +4,11 @@
 
 A desktop pet for [Paseo](https://paseo.sh). It sits in a corner of your screen, reacts to what your agents are doing, tells you when a turn finishes or fails, and lets you approve or deny permission requests without opening Paseo.
 
+<p>
+  <img src="images/permission.png" alt="Permission request bubble" width="320">
+  <img src="images/completed.png" alt="Turn completed bubble" width="320">
+</p>
+
 | Folder | What it is |
 | --- | --- |
 | `plugin/` | **pet-bridge**, a Paseo plugin that streams agent events over a local SSE API |
@@ -69,7 +74,7 @@ Requirements: macOS 14+, Paseo 0.11.2+, and Xcode Command Line Tools (to build t
 #    (or add "pluginsEnabled": true to ~/.paseo/config.json and run `paseo reload`)
 
 # 2) Install the bridge plugin
-paseo plugin install github:me0w2en/paseo-pet:plugin
+paseo plugin install npm:paseo-pet-bridge        # or github:me0w2en/paseo-pet:plugin
 paseo plugin ls            # pet-bridge should be running
 
 # 3) Build the app, move it somewhere permanent, and run it
