@@ -1,8 +1,15 @@
 {
   "name": "paseo-pet-bridge",
-  "private": true,
   "version": "0.1.0",
   "description": "Streams Paseo agent completions, failures, and permission requests to a desktop pet over a local SSE API",
+  "keywords": [
+    "paseo",
+    "paseo-plugin",
+    "desktop-pet",
+    "notifications"
+  ],
+  "author": "me0w2en",
+  "homepage": "https://github.com/me0w2en/paseo-pet#readme",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -18,7 +25,8 @@
     "index.server.tsx",
     "client/",
     "server/",
-    "shared/"
+    "shared/",
+    "README.md"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit"
