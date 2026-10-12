@@ -66,6 +66,13 @@ final class PetWindowController {
             .sink { [weak self] _ in self?.updateVisibility() }
             .store(in: &cancellables)
 
+        // Monitors come and go; a position saved on a display that is gone would leave the pet off screen.
+        NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.clampToScreen() }
+            .store(in: &cancellables)
+
+        clampToScreen()
         layout()
         updateVisibility()
     }
