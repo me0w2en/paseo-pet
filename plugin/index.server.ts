@@ -2,6 +2,8 @@ import type { PluginHookContext, PluginServerContext } from "@getpaseo/plugin/se
 import { startBridge, type Bridge } from "./server/http";
 import { AgentBoard, describePermission, finalAssistantText, type PetNotice } from "./server/state";
 
+const TITLE_LOOKUP_TIMEOUT_MS = 1500;
+
 export default function contribute(server: PluginServerContext) {
   const board = new AgentBoard();
   let bridge: Bridge | null = null;
@@ -14,6 +16,33 @@ export default function contribute(server: PluginServerContext) {
     if (notice) {
       bridge?.broadcast("notice", notice);
     }
+  };
+
+  // Title lookups already in flight, so a burst of hooks asks the daemon once per agent.
+  const titleLookups = new Map<string, Promise<void>>();
+
+  // Hook payloads often carry `title: null`. Resolve the real title before a notice goes out so the bubble names the agent.
+  const ensureTitle = (agentId: string, client: PluginHookContext["paseo"]): Promise<void> => {
+    if (!board.needsTitle(agentId)) {
+      return Promise.resolve();
+    }
+    const pending = titleLookups.get(agentId);
+    if (pending) {
+      return pending;
+    }
+    // Never hold a hook (and the daemon behind it) for long; the next hook retries the lookup.
+    const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), TITLE_LOOKUP_TIMEOUT_MS));
+    const lookup = Promise.race([client.agents.ref(agentId).refresh(), timeout])
+      .then((result) => {
+        const title = result?.agent.title?.trim();
+        if (title) {
+          board.setTitle(agentId, title);
+        }
+      })
+      .catch((error: unknown) => console.error("[pet-bridge] title lookup failed", error))
+      .finally(() => titleLookups.delete(agentId));
+    titleLookups.set(agentId, lookup);
+    return lookup;
   };
 
   void startBridge({
@@ -54,38 +83,46 @@ export default function contribute(server: PluginServerContext) {
     })
     .catch((error: unknown) => console.error("[pet-bridge] failed to start", error));
 
-  server.on("agent.turn_started", (event, context) => {
+  server.on("agent.turn_started", async (event, context) => {
     paseo = context.paseo;
     board.upsert(event.agent, { status: "running" });
     publish();
+    await ensureTitle(event.agent.id, context.paseo);
+    publish();
   });
 
-  server.on("agent.turn_ended", (event, context) => {
+  server.on("agent.turn_ended", async (event, context) => {
     paseo = context.paseo;
     const { outcome } = event;
     if (outcome.kind === "failed") {
-      const agent = board.upsert(event.agent, { status: "error", pending: [] });
-      publish({ type: "turn_failed", agent, message: outcome.error.message });
+      board.upsert(event.agent, { status: "error", pending: [] });
+      await ensureTitle(event.agent.id, context.paseo);
+      const agent = board.get(event.agent.id);
+      publish(agent ? { type: "turn_failed", agent, message: outcome.error.message } : undefined);
       return;
     }
-    const agent = board.upsert(event.agent, { status: "idle", pending: [] });
+    board.upsert(event.agent, { status: "idle", pending: [] });
+    await ensureTitle(event.agent.id, context.paseo);
+    const agent = board.get(event.agent.id);
     // Subagents finish constantly during orchestration; only the agent the user talks to gets a bubble.
-    if (outcome.kind === "completed" && event.agent.parentAgentId === null) {
+    if (agent && outcome.kind === "completed" && event.agent.parentAgentId === null) {
       publish({ type: "turn_completed", agent, summary: finalAssistantText(event.timeline) });
       return;
     }
     publish();
   });
 
-  server.on("agent.permission_requested", (event, context) => {
+  server.on("agent.permission_requested", async (event, context) => {
     paseo = context.paseo;
     const permission = describePermission(event.request);
     const pending = [
       ...(board.get(event.agent.id)?.pending ?? []).filter((entry) => entry.requestId !== permission.requestId),
       permission,
     ];
-    const agent = board.upsert(event.agent, { status: "waiting", pending });
-    publish({ type: "permission_requested", agent, permission });
+    board.upsert(event.agent, { status: "waiting", pending });
+    await ensureTitle(event.agent.id, context.paseo);
+    const agent = board.get(event.agent.id);
+    publish(agent ? { type: "permission_requested", agent, permission } : undefined);
   });
 
   server.on("agent.permission_resolved", (event, context) => {

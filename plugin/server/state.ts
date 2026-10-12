@@ -30,6 +30,8 @@ export type PetNotice =
   | { type: "turn_failed"; agent: PetAgent; message: string }
   | { type: "permission_requested"; agent: PetAgent; permission: PetPermission };
 
+export const UNTITLED_AGENT = "이름 없는 에이전트";
+
 const SUMMARY_CHARS = 160;
 const DETAIL_CHARS = 240;
 
@@ -96,11 +98,26 @@ export class AgentBoard {
     return this.agents.delete(id);
   }
 
+  /** Hook payloads often carry `title: null`; the daemon knows the real one, so fill it in afterwards. */
+  needsTitle(id: string): boolean {
+    const current = this.agents.get(id);
+    return current !== undefined && current.title === UNTITLED_AGENT;
+  }
+
+  setTitle(id: string, title: string): boolean {
+    const current = this.agents.get(id);
+    if (!current || current.title === title) {
+      return false;
+    }
+    this.agents.set(id, { ...current, title });
+    return true;
+  }
+
   upsert(agent: PluginHookAgent, patch: Partial<Pick<PetAgent, "status" | "pending">> = {}): PetAgent {
     const previous = this.agents.get(agent.id);
     const next: PetAgent = {
       id: agent.id,
-      title: agent.title ?? previous?.title ?? "이름 없는 에이전트",
+      title: agent.title ?? previous?.title ?? UNTITLED_AGENT,
       provider: agent.provider,
       cwd: agent.cwd,
       workspaceId: agent.workspaceId,
